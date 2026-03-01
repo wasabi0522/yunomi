@@ -67,10 +67,10 @@ SCRIPT="$PROJECT_ROOT/scripts/yunomi-main.sh"
   printf '#!/bin/sh\necho dummy\n' >"$fake_bin/ghq"
   chmod +x "$fake_bin/ghq"
 
-  # override with command() in case jq is found via PATH manipulation
-  # (some environments have /usr/bin/jq), so fail only jq via command()
+  # override with command() to fail only jq via command -v
+  # PATH includes fake_bin so hashi/ghq are found by builtin command
   local script="$SCRIPT"
-  run bash -c "
+  run env PATH="$fake_bin:/usr/bin:/bin" bash -c "
     command() {
       if [[ \"\$1\" == '-v' && \"\$2\" == 'jq' ]]; then
         return 1
@@ -100,6 +100,9 @@ SCRIPT="$PROJECT_ROOT/scripts/yunomi-main.sh"
   tmpscript=$(mktemp)
   cat >"$tmpscript" <<SCRIPT
 source '$SCRIPT'
+require_command() { return 0; }
+ghq() { echo "/tmp/ghq-root"; }
+export -f ghq
 show_repo_list() {
   printf '%s' "\$YUNOMI_EXIT_FLAG" >"$flag_file"
   return 1  # end loop
@@ -127,6 +130,9 @@ SCRIPT
   tmpscript=$(mktemp)
   cat >"$tmpscript" <<SCRIPT
 source '$SCRIPT'
+require_command() { return 0; }
+ghq() { echo "/tmp/ghq-root"; }
+export -f ghq
 show_repo_list() {
   printf '%s' "\$YUNOMI_EXIT_FLAG" >"$path_record_file"
   touch "\$YUNOMI_EXIT_FLAG"
@@ -159,6 +165,9 @@ SCRIPT
   tmpscript=$(mktemp)
   cat >"$tmpscript" <<SCRIPT
 source '$SCRIPT'
+require_command() { return 0; }
+ghq() { echo "/tmp/ghq-root"; }
+export -f ghq
 show_repo_list() {
   printf '%s' "\$YUNOMI_SCRIPTS_DIR" >"$scripts_dir_file"
   return 1  # end loop

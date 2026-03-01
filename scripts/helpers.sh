@@ -167,14 +167,16 @@ file_mtime() {
       return 0
     fi
   fi
-  # macOS stat uses -f %m; Linux stat uses -c %Y
-  if stat -f %m "$filepath" 2>/dev/null; then
-    _YUNOMI_STAT_ARGS_STR="-f %m"
+  # Linux stat uses -c %Y; macOS stat uses -f %m
+  # Try Linux first: on GNU stat, -f means "file system status" and -f %m
+  # would succeed with wrong output, so -c %Y (unambiguous) must come first.
+  if stat -c %Y "$filepath" 2>/dev/null; then
+    _YUNOMI_STAT_ARGS_STR="-c %Y"
     export _YUNOMI_STAT_ARGS_STR
     return 0
   fi
-  if stat -c %Y "$filepath" 2>/dev/null; then
-    _YUNOMI_STAT_ARGS_STR="-c %Y"
+  if stat -f %m "$filepath" 2>/dev/null; then
+    _YUNOMI_STAT_ARGS_STR="-f %m"
     export _YUNOMI_STAT_ARGS_STR
     return 0
   fi

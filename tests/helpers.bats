@@ -340,14 +340,14 @@ load 'test_helper'
 # ---------------------------------------------------------------------------
 
 @test "file_mtime: returns 0 for non-existent file" {
-  unset _YUNOMI_STAT_FMT
+  unset _YUNOMI_STAT_ARGS_STR
   run file_mtime "/tmp/yunomi-test-nonexistent-file-$$"
   assert_success
   assert_output "0"
 }
 
 @test "file_mtime: macOS stat path (stat -f %m)" {
-  unset _YUNOMI_STAT_FMT
+  unset _YUNOMI_STAT_ARGS_STR
   # mock the stat command to simulate macOS stat -f %m behavior
   stat() {
     if [[ "$1" == "-f" && "$2" == "%m" ]]; then
@@ -369,7 +369,7 @@ load 'test_helper'
 }
 
 @test "file_mtime: Linux stat path (stat -c %Y) when macOS stat fails" {
-  unset _YUNOMI_STAT_FMT
+  unset _YUNOMI_STAT_ARGS_STR
   # macOS stat fails, Linux stat succeeds
   stat() {
     if [[ "$1" == "-f" && "$2" == "%m" ]]; then
@@ -393,7 +393,7 @@ load 'test_helper'
 }
 
 @test "file_mtime: returns 0 when both stat variants fail" {
-  unset _YUNOMI_STAT_FMT
+  unset _YUNOMI_STAT_ARGS_STR
   stat() {
     return 1
   }
@@ -409,7 +409,7 @@ load 'test_helper'
 }
 
 @test "file_mtime: returns numeric timestamp for existing file" {
-  unset _YUNOMI_STAT_FMT
+  unset _YUNOMI_STAT_ARGS_STR
   # verify behavior with a real file without mocking the stat command
   # confirms that either macOS or Linux stat succeeds
   local tmpfile
@@ -423,7 +423,7 @@ load 'test_helper'
 }
 
 @test "file_mtime: cached format avoids repeated platform detection" {
-  unset _YUNOMI_STAT_FMT
+  unset _YUNOMI_STAT_ARGS_STR
 
   local call_count_file
   call_count_file=$(mktemp)
@@ -464,8 +464,8 @@ load 'test_helper'
   [ "$calls_in_second" -eq 1 ]
 }
 
-@test "file_mtime: unset _YUNOMI_STAT_FMT forces re-detection" {
-  _YUNOMI_STAT_FMT="-f %m"
+@test "file_mtime: unset _YUNOMI_STAT_ARGS_STR forces re-detection" {
+  _YUNOMI_STAT_ARGS_STR="-f %m"
 
   stat() {
     if [[ "$1" == "-f" && "$2" == "%m" ]]; then
@@ -485,7 +485,7 @@ load 'test_helper'
   assert_output "1700000000"
 
   # After unsetting, it should re-detect
-  unset _YUNOMI_STAT_FMT
+  unset _YUNOMI_STAT_ARGS_STR
 
   stat() {
     if [[ "$1" == "-c" && "$2" == "%Y" ]]; then
