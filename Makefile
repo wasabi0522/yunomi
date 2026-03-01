@@ -2,7 +2,7 @@
 BASH_FILES := scripts/*.sh yunomi.tmux
 
 # --- Common ---
-BATS_LIB_PATH := $(CURDIR)/tests/libs
+BATS_LIB_PATH ?= $(CURDIR)/tests/libs
 export BATS_LIB_PATH
 
 .PHONY: all test lint fmt coverage setup
