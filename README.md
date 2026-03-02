@@ -6,6 +6,7 @@
 
 [![CI](https://github.com/wasabi0522/yunomi/actions/workflows/ci.yml/badge.svg)](https://github.com/wasabi0522/yunomi/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![bash 4.0+](https://img.shields.io/badge/bash-4.0%2B-green)
 ![tmux 3.3+](https://img.shields.io/badge/tmux-3.3%2B-green)
 ![fzf 0.63+](https://img.shields.io/badge/fzf-0.63%2B-green)
 
@@ -24,7 +25,14 @@ Two-screen fzf popup that connects [ghq](https://github.com/x-motemen/ghq) repos
 ## Installation
 
 > [!NOTE]
-> Requires **tmux 3.3+**, **fzf 0.63+**, **[ghq](https://github.com/x-motemen/ghq)**, **[hashi](https://github.com/wasabi0522/hashi)**, and **jq**.
+> Requires **bash 4.0+**, **tmux 3.3+**, **fzf 0.63+**, **[ghq](https://github.com/x-motemen/ghq)**, **[hashi](https://github.com/wasabi0522/hashi)**, and **jq**.
+> macOS ships with bash 3.2. Install bash 4+ via Homebrew (see below).
+
+### Prerequisites
+
+```bash
+brew install bash fzf ghq jq wasabi0522/tap/hashi
+```
 
 ### With [TPM](https://github.com/tmux-plugins/tpm) (recommended)
 
