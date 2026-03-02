@@ -28,7 +28,7 @@ SCRIPT="$PROJECT_ROOT/scripts/yunomi-main.sh"
   # pass /dev/null as input so read prompts don't block
   # use env to pass PATH to the subshell
   local script="$SCRIPT"
-  run env PATH="$fake_bin:/usr/bin:/bin" bash -c "source '$script'; main" </dev/null
+  run env PATH="$fake_bin:/usr/bin:/bin" "$BASH" -c "source '$script'; main" </dev/null
   rm -rf "$fake_bin"
 
   assert_failure
@@ -48,7 +48,7 @@ SCRIPT="$PROJECT_ROOT/scripts/yunomi-main.sh"
   chmod +x "$fake_bin/jq"
 
   local script="$SCRIPT"
-  run env PATH="$fake_bin:/usr/bin:/bin" bash -c "source '$script'; main" </dev/null
+  run env PATH="$fake_bin:/usr/bin:/bin" "$BASH" -c "source '$script'; main" </dev/null
   rm -rf "$fake_bin"
 
   assert_failure
@@ -70,7 +70,7 @@ SCRIPT="$PROJECT_ROOT/scripts/yunomi-main.sh"
   # override with command() to fail only jq via command -v
   # PATH includes fake_bin so hashi/ghq are found by builtin command
   local script="$SCRIPT"
-  run env PATH="$fake_bin:/usr/bin:/bin" bash -c "
+  run env PATH="$fake_bin:/usr/bin:/bin" "$BASH" -c "
     command() {
       if [[ \"\$1\" == '-v' && \"\$2\" == 'jq' ]]; then
         return 1
@@ -85,6 +85,23 @@ SCRIPT="$PROJECT_ROOT/scripts/yunomi-main.sh"
 
   assert_failure
   assert_output --partial "jq command not found"
+}
+
+# ---------------------------------------------------------------------------
+# Bash version check
+# ---------------------------------------------------------------------------
+
+@test "main: exits with error when bash version check fails" {
+  source "$SCRIPT"
+  # Override require_bash_version to simulate failure
+  require_bash_version() {
+    printf 'yunomi: bash 4.0+ is required (current: 3.2)\n'
+    return 1
+  }
+  run main </dev/null
+
+  assert_failure
+  assert_output --partial "bash 4.0+ is required"
 }
 
 # ---------------------------------------------------------------------------

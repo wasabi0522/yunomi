@@ -130,6 +130,20 @@ calc_column_widths() {
   printf 'status_w=%d\n' "$status_w"
 }
 
+# require_bash_version <minimum_version>
+# Check if the current bash version meets the minimum requirement.
+# Returns 1 with an error message if the version is too old.
+require_bash_version() {
+  local min_version="$1"
+  local current="${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}"
+  if ! version_ge "$current" "$min_version"; then
+    printf 'yunomi: bash %s+ is required (current: %s). Install from https://www.gnu.org/software/bash/\n' \
+      "$min_version" "$current"
+    read -r -n 1 -s -p 'Press any key to close...'
+    return 1
+  fi
+}
+
 # require_command <cmd> <install_url>
 # Check if a command exists. If not, print an error message and return 1.
 require_command() {

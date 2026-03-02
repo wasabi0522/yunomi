@@ -505,6 +505,33 @@ load 'test_helper'
 }
 
 # ---------------------------------------------------------------------------
+# require_bash_version
+# ---------------------------------------------------------------------------
+
+@test "require_bash_version: succeeds when version meets requirement" {
+  run require_bash_version "4.0" </dev/null
+  assert_success
+}
+
+@test "require_bash_version: fails when version is below requirement" {
+  run require_bash_version "99.0" </dev/null
+  assert_failure
+}
+
+@test "require_bash_version: error message includes required version" {
+  run require_bash_version "99.0" </dev/null
+  assert_failure
+  assert_output --partial "bash 99.0+ is required"
+}
+
+@test "require_bash_version: error message includes current version" {
+  local expected="${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}"
+  run require_bash_version "99.0" </dev/null
+  assert_failure
+  assert_output --partial "current: $expected"
+}
+
+# ---------------------------------------------------------------------------
 # require_command
 # ---------------------------------------------------------------------------
 

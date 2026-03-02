@@ -142,6 +142,9 @@ _cleanup_exit_flag() {
 }
 
 main() {
+  # Verify bash version (associative arrays require bash 4+)
+  require_bash_version "4.0" || exit 1
+
   # Verify required commands are available
   require_command hashi "https://github.com/wasabi0522/hashi" || exit 1
   require_command ghq "https://github.com/x-motemen/ghq" || exit 1
