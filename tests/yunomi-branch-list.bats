@@ -347,6 +347,56 @@ teardown() {
 }
 
 # ---------------------------------------------------------------------------
+# Default branch pinned to top
+# ---------------------------------------------------------------------------
+
+@test "branch-list: default branch is pinned to top" {
+  MOCK_GIT_BRANCHES=$'alpha\nmain\nzeta'
+  mock_git
+  mock_hashi '[]'
+  mock_jq ""
+
+  run main "$MOCK_REPO_DIR"
+  assert_success
+
+  # First data line (lines[1]) field1 must be "main"
+  local first_data
+  first_data=$(printf '%s' "${lines[1]}" | cut -f1)
+  [ "$first_data" = "main" ]
+}
+
+@test "branch-list: default branch pinning preserves order of remaining branches" {
+  MOCK_GIT_BRANCHES=$'alpha\nmain\nzeta'
+  mock_git
+  mock_hashi '[]'
+  mock_jq ""
+
+  run main "$MOCK_REPO_DIR"
+  assert_success
+
+  local b1 b2 b3
+  b1=$(printf '%s' "${lines[1]}" | cut -f1)
+  b2=$(printf '%s' "${lines[2]}" | cut -f1)
+  b3=$(printf '%s' "${lines[3]}" | cut -f1)
+  [ "$b1" = "main" ]
+  [ "$b2" = "alpha" ]
+  [ "$b3" = "zeta" ]
+}
+
+@test "branch-list: --quick mode also pins default branch to top" {
+  MOCK_GIT_BRANCHES=$'alpha\nmain\nzeta'
+  mock_git
+  mock_jq ""
+
+  run main --quick "$MOCK_REPO_DIR"
+  assert_success
+
+  local first_data
+  first_data=$(printf '%s' "${lines[1]}" | cut -f1)
+  [ "$first_data" = "main" ]
+}
+
+# ---------------------------------------------------------------------------
 # branch-sort option
 # ---------------------------------------------------------------------------
 
@@ -424,12 +474,12 @@ teardown() {
 
   # Header line + 3 data lines
   [ "${#lines[@]}" -eq 4 ]
-  # for-each-ref output order must be preserved as-is
+  # Default branch (main) is pinned to top; remaining branches preserve MRU order
   local b1 b2 b3
   b1=$(printf '%s' "${lines[1]}" | cut -f1)
   b2=$(printf '%s' "${lines[2]}" | cut -f1)
   b3=$(printf '%s' "${lines[3]}" | cut -f1)
-  [ "$b1" = "feature/recent" ]
-  [ "$b2" = "main" ]
+  [ "$b1" = "main" ]
+  [ "$b2" = "feature/recent" ]
   [ "$b3" = "feature/old" ]
 }

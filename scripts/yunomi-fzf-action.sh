@@ -43,11 +43,11 @@ main() {
 
   case "$action" in
     new)
-      # execute: launch yunomi-new.sh (prompt → hashi new)
+      # execute: launch yunomi-new.sh (prompt → hashi new) with base branch
       # reload:  regenerate the branch list
       # transform: check the exit flag → if present, output abort to close fzf
-      printf 'execute(%s/yunomi-new.sh %s)+reload(%s/yunomi-branch-list.sh %s)+transform(%s)\n' \
-        "$ESCAPED_SCRIPTS_DIR" "$escaped_repo" \
+      printf 'execute(%s/yunomi-new.sh %s %s)+reload(%s/yunomi-branch-list.sh %s)+transform(%s)\n' \
+        "$ESCAPED_SCRIPTS_DIR" "$escaped_repo" "$escaped_branch" \
         "$ESCAPED_SCRIPTS_DIR" "$escaped_repo" \
         "$transform_check"
       ;;

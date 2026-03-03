@@ -68,6 +68,25 @@ teardown() {
 }
 
 # ---------------------------------------------------------------------------
+# Base branch argument
+# ---------------------------------------------------------------------------
+
+@test "yunomi-new: valid branch name with base calls hashi new with base" {
+  run bash -c "echo 'feature/login' | bash '$PROJECT_ROOT/scripts/yunomi-new.sh' '$MOCK_REPO_PATH' 'develop'"
+  assert_success
+  run grep 'new -- feature/login develop' "$MOCK_HASHI_CALLS"
+  assert_success
+}
+
+@test "yunomi-new: without base arg calls hashi new without base" {
+  run bash -c "echo 'feature/login' | bash '$PROJECT_ROOT/scripts/yunomi-new.sh' '$MOCK_REPO_PATH'"
+  assert_success
+  # hashi new is called with branch only (no base)
+  run grep -E 'new -- feature/login$' "$MOCK_HASHI_CALLS"
+  assert_success
+}
+
+# ---------------------------------------------------------------------------
 # Cancel: ESC key
 # ---------------------------------------------------------------------------
 

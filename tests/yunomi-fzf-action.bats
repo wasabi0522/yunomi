@@ -67,6 +67,13 @@ teardown() {
   assert_output --partial "/mock/scripts"
 }
 
+@test "yunomi-fzf-action: new action execute contains base branch when provided" {
+  run bash "$FZF_ACTION_SH" new /repo/path main
+  assert_success
+  # execute(yunomi-new.sh /repo/path main) format
+  assert_output --regexp 'execute\([^ ]*yunomi-new\.sh [^ ]+ main\)'
+}
+
 # --- remove action ---
 
 @test "yunomi-fzf-action: remove action outputs execute+reload chain (no transform)" {

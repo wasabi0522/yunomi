@@ -48,6 +48,23 @@ main() {
     return 0
   fi
 
+  # Pin the default branch to the top of the list
+  local default_branch
+  default_branch=$(get_default_branch "$repo_path")
+  local _remaining=""
+  local _found=false
+  while IFS= read -r _line; do
+    [[ -z "$_line" ]] && continue
+    if [[ "$_found" == false && "$_line" == "$default_branch" ]]; then
+      _found=true
+    else
+      _remaining+="${_line}"$'\n'
+    fi
+  done <<<"$branches_raw"
+  if [[ "$_found" == true ]]; then
+    branches_raw="${default_branch}"$'\n'"${_remaining%$'\n'}"
+  fi
+
   if [[ "$quick" == true ]]; then
     _quick_branch_list "$branches_raw"
   else
