@@ -8,8 +8,9 @@ main() {
   local old_branch="$2"
 
   local new_branch
-  # IFS= prevents trimming leading/trailing whitespace (whitespace-only input is left to hashi for validation)
-  IFS= read -r -p "Rename '${old_branch}' to (esc+enter to cancel): " new_branch
+
+  read_input "Rename '${old_branch}' to (esc to cancel): " || return 0
+  new_branch="$REPLY"
 
   # Empty input cancels the operation
   if [[ -z "$new_branch" ]]; then

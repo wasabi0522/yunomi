@@ -8,7 +8,8 @@ main() {
   local base_branch="${2:-}"
   local name
 
-  read -r -p "New branch name (esc+enter to cancel): " name
+  read_input "New branch name (esc to cancel): " || return 0
+  name="$REPLY"
 
   # Empty input cancels the operation
   if [[ -z "$name" ]]; then

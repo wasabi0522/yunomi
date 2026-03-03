@@ -87,6 +87,27 @@ teardown() {
 }
 
 # ---------------------------------------------------------------------------
+# Cancel: ESC key
+# ---------------------------------------------------------------------------
+
+@test "yunomi-new: ESC key exits 0 without calling hashi" {
+  # simulate ESC (0x1b) as input
+  run bash -c "printf '\x1b' | bash '$PROJECT_ROOT/scripts/yunomi-new.sh' '$MOCK_REPO_PATH'"
+
+  assert_success
+  # hashi must not be called (call record file must be empty)
+  [ ! -s "$MOCK_HASHI_CALLS" ]
+}
+
+@test "yunomi-new: ESC key does not create exit flag" {
+  run bash -c "printf '\x1b' | YUNOMI_PID='99999' YUNOMI_EXIT_FLAG='/tmp/yunomi-exit-99999' bash '$PROJECT_ROOT/scripts/yunomi-new.sh' '$MOCK_REPO_PATH'"
+
+  assert_success
+  # exit flag must not be created
+  [ ! -f "$YUNOMI_EXIT_FLAG" ]
+}
+
+# ---------------------------------------------------------------------------
 # Error: cd failure
 # ---------------------------------------------------------------------------
 
