@@ -107,6 +107,7 @@ show_branch_list() {
   fzf_opts+=(--pointer '▍')
   fzf_opts+=(--color 'header:bold,footer:dim,pointer:bold,prompt:bold')
   fzf_opts+=(--footer "$footer")
+  fzf_opts+=(--footer-border line)
   fzf_opts+=(--bind "enter:accept")
   fzf_opts+=(--bind "${bind_new}:transform:$ESCAPED_SCRIPTS_DIR/yunomi-fzf-action.sh new $escaped_repo '{1}'")
   fzf_opts+=(--bind "${bind_delete}:transform:$ESCAPED_SCRIPTS_DIR/yunomi-fzf-action.sh remove $escaped_repo '{1}'")
