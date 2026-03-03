@@ -177,7 +177,7 @@ load 'test_helper'
 
   run build_branch_footer
   assert_success
-  assert_output "  enter:switch  C-o:new(from selected)  C-d:del  C-r:rename  esc:back"
+  assert_output "  enter:switch  C-o:new (from selected branch)  C-d:del  C-r:rename  esc:back"
 }
 
 @test "build_branch_footer: custom keys are reflected in footer" {
@@ -202,7 +202,7 @@ load 'test_helper'
 
   run build_branch_footer
   assert_success
-  assert_output "  enter:switch  C-n:new(from selected)  C-x:del  C-e:rename  esc:back"
+  assert_output "  enter:switch  C-n:new (from selected branch)  C-x:del  C-e:rename  esc:back"
 }
 
 @test "build_branch_footer: contains enter:switch" {
