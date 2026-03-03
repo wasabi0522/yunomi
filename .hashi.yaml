@@ -1,0 +1,9 @@
+worktree_dir: .worktrees
+
+hooks:
+  copy_files:
+    - tests/libs
+    - .claude
+    - CLAUDE.md
+  post_new:
+    - claude
