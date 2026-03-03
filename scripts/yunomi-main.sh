@@ -100,7 +100,6 @@ show_branch_list() {
   fzf_opts+=(--border rounded)
   fzf_opts+=(--border-label ' yunomi ')
   fzf_opts+=(--header-border line)
-  fzf_opts+=(--list-border line)
   fzf_opts+=(--prompt 'Branch> ')
   fzf_opts+=(--ansi)
   fzf_opts+=(--highlight-line)
