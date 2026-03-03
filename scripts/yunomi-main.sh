@@ -108,7 +108,7 @@ show_branch_list() {
   fzf_opts+=(--color 'header:bold,footer:dim,pointer:bold,prompt:bold')
   fzf_opts+=(--footer "$footer")
   fzf_opts+=(--bind "enter:accept")
-  fzf_opts+=(--bind "${bind_new}:transform:$ESCAPED_SCRIPTS_DIR/yunomi-fzf-action.sh new $escaped_repo")
+  fzf_opts+=(--bind "${bind_new}:transform:$ESCAPED_SCRIPTS_DIR/yunomi-fzf-action.sh new $escaped_repo '{1}'")
   fzf_opts+=(--bind "${bind_delete}:transform:$ESCAPED_SCRIPTS_DIR/yunomi-fzf-action.sh remove $escaped_repo '{1}'")
   fzf_opts+=(--bind "${bind_rename}:transform:$ESCAPED_SCRIPTS_DIR/yunomi-fzf-action.sh rename $escaped_repo '{1}'")
   fzf_opts+=(--bind 'esc:abort')

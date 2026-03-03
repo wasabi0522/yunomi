@@ -5,6 +5,7 @@ source "$CURRENT_DIR/helpers.sh"
 
 main() {
   local repo_path="$1"
+  local base_branch="${2:-}"
   local name
 
   read -r -p "New branch name: " name
@@ -18,7 +19,11 @@ main() {
     printf 'yunomi: cannot cd to %s\n' "$repo_path" >&2
     return 1
   }
-  hashi new -- "$name" || return 1
+  if [[ -n "$base_branch" ]]; then
+    hashi new -- "$name" "$base_branch" || return 1
+  else
+    hashi new -- "$name" || return 1
+  fi
 
   # On success: set the exit flag to signal the popup to close
   touch "$YUNOMI_EXIT_FLAG"

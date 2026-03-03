@@ -61,12 +61,12 @@ format_key_hint() {
 # Passing pre-fetched values avoids duplicate tmux IPC calls.
 #
 # Example output (default settings):
-#   "  enter:switch  C-o:new  C-d:del  C-r:rename  esc:back"
+#   "  enter:switch  C-o:new(from selected)  C-d:del  C-r:rename  esc:back"
 build_branch_footer() {
   local bind_new="${1:-$(get_option "@yunomi-bind-new" "ctrl-o")}"
   local bind_delete="${2:-$(get_option "@yunomi-bind-delete" "ctrl-d")}"
   local bind_rename="${3:-$(get_option "@yunomi-bind-rename" "ctrl-r")}"
-  printf '  enter:switch  %s:new  %s:del  %s:rename  esc:back' \
+  printf '  enter:switch  %s:new(from selected)  %s:del  %s:rename  esc:back' \
     "$(format_key_hint "$bind_new")" \
     "$(format_key_hint "$bind_delete")" \
     "$(format_key_hint "$bind_rename")"
