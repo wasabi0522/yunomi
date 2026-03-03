@@ -69,12 +69,12 @@ teardown() {
 
 # --- remove action ---
 
-@test "yunomi-fzf-action: remove action outputs execute+reload+transform chain" {
+@test "yunomi-fzf-action: remove action outputs execute+reload chain (no transform)" {
   run bash "$FZF_ACTION_SH" remove /repo/path feature/login
   assert_success
   assert_output --partial "execute("
   assert_output --partial "+reload("
-  assert_output --partial "+transform("
+  refute_output --partial "+transform("
 }
 
 @test "yunomi-fzf-action: remove action execute contains yunomi-remove.sh" {
@@ -101,10 +101,10 @@ teardown() {
   assert_output --partial "yunomi-branch-list.sh"
 }
 
-@test "yunomi-fzf-action: remove action transform contains unexpanded YUNOMI_PID" {
+@test "yunomi-fzf-action: remove action does not contain transform" {
   run bash "$FZF_ACTION_SH" remove /repo/path feature/login
   assert_success
-  assert_output --partial '$YUNOMI_EXIT_FLAG'
+  refute_output --partial "transform("
 }
 
 # --- rename action ---

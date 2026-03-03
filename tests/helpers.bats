@@ -655,3 +655,29 @@ load 'test_helper'
   assert_success
   assert_output "clean"
 }
+
+# ---------------------------------------------------------------------------
+# read_input
+# ---------------------------------------------------------------------------
+
+@test "read_input: normal input sets REPLY and returns 0" {
+  run bash -c "source '$PROJECT_ROOT/scripts/helpers.sh'; read_input 'prompt: ' <<< 'hello' 2>/dev/null; echo \"\$REPLY\""
+  assert_success
+  assert_output "hello"
+}
+
+@test "read_input: empty Enter sets REPLY to empty and returns 0" {
+  run bash -c "source '$PROJECT_ROOT/scripts/helpers.sh'; echo '' | read_input 'prompt: ' 2>/dev/null; echo \"exit_code=\$?\""
+  assert_success
+  assert_output "exit_code=0"
+}
+
+@test "read_input: ESC key returns 1" {
+  run bash -c "source '$PROJECT_ROOT/scripts/helpers.sh'; printf '\\x1b' | read_input 'prompt: '"
+  assert_failure
+}
+
+@test "read_input: EOF without newline returns 1" {
+  run bash -c "source '$PROJECT_ROOT/scripts/helpers.sh'; printf 'abc' | read_input 'prompt: '"
+  assert_failure
+}
