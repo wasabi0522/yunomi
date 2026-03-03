@@ -65,6 +65,22 @@ teardown() {
   [ ! -s "$MOCK_HASHI_CALLS" ]
 }
 
+# ---------------------------------------------------------------------------
+# Cancel: ESC key
+# ---------------------------------------------------------------------------
+
+@test "yunomi-rename: ESC key exits 0 without calling hashi" {
+  run bash -c "printf '\x1b' | bash '$SCRIPT' '$MOCK_REPO_PATH' 'old-branch'"
+  assert_success
+
+  # hashi must not be called (call record file must be empty)
+  [ ! -s "$MOCK_HASHI_CALLS" ]
+}
+
+# ---------------------------------------------------------------------------
+# Whitespace input
+# ---------------------------------------------------------------------------
+
 @test "yunomi-rename: whitespace-only input calls hashi rename (hashi validates)" {
   # whitespace-only input passes the -z check so hashi rename is called
   # validation is hashi's responsibility

@@ -54,11 +54,10 @@ main() {
     remove)
       # execute: launch yunomi-remove.sh (hashi remove + confirmation prompt)
       # reload:  regenerate the branch list
-      # transform: check the exit flag → if present, output abort to close fzf
-      printf 'execute(%s/yunomi-remove.sh %s %s)+reload(%s/yunomi-branch-list.sh %s)+transform(%s)\n' \
+      # no transform: always stay in fzf after remove
+      printf 'execute(%s/yunomi-remove.sh %s %s)+reload(%s/yunomi-branch-list.sh %s)\n' \
         "$ESCAPED_SCRIPTS_DIR" "$escaped_repo" "$escaped_branch" \
-        "$ESCAPED_SCRIPTS_DIR" "$escaped_repo" \
-        "$transform_check"
+        "$ESCAPED_SCRIPTS_DIR" "$escaped_repo"
       ;;
     rename)
       # execute: launch yunomi-rename.sh (prompt → hashi rename)

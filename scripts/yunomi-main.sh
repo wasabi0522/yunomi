@@ -95,7 +95,6 @@ show_branch_list() {
   fzf_opts+=(--with-nth '2..')
   fzf_opts+=(--delimiter $'\t')
   fzf_opts+=(--layout reverse)
-  fzf_opts+=(--header-first)
   fzf_opts+=(--header-lines 1)
   fzf_opts+=(--border rounded)
   fzf_opts+=(--border-label ' yunomi ')

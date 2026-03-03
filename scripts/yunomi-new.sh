@@ -7,7 +7,8 @@ main() {
   local repo_path="$1"
   local name
 
-  read -r -p "New branch name: " name
+  read_input "New branch name (esc to cancel): " || return 0
+  name="$REPLY"
 
   # Empty input cancels the operation
   if [[ -z "$name" ]]; then

@@ -315,6 +315,63 @@ print_separator() {
   fi
 }
 
+# read_input <prompt>
+# Interactive line reader with ESC-to-cancel support.
+# Reads a line character by character from stdin.
+#
+# Arguments:
+#   $1  prompt - the prompt string to display
+#
+# Output:
+#   Sets REPLY to the entered string.
+#   Prints the prompt and echoes typed characters to stderr.
+#
+# Returns:
+#   0 - user pressed Enter (REPLY contains the input, possibly empty)
+#   1 - user pressed ESC or EOF (cancelled)
+read_input() {
+  local prompt="$1"
+  local input=""
+  local char next
+
+  printf '%s' "$prompt" >&2
+  REPLY=""
+
+  while IFS= read -rsn1 char; do
+    case "$char" in
+      $'\e')
+        # Distinguish standalone ESC from escape sequences (arrow keys, etc.)
+        IFS= read -rsn1 -t 0.05 next || true
+        if [[ -z "$next" ]]; then
+          printf '\n' >&2
+          return 1
+        fi
+        # Consume remaining escape sequence characters
+        while IFS= read -rsn1 -t 0.05 _ || false; do :; done
+        ;;
+      '') # Enter (newline)
+        printf '\n' >&2
+        REPLY="$input"
+        return 0
+        ;;
+      $'\x7f' | $'\b') # Backspace/Delete
+        if [[ -n "$input" ]]; then
+          input="${input%?}"
+          printf '\b \b' >&2
+        fi
+        ;;
+      *)
+        input+="$char"
+        printf '%s' "$char" >&2
+        ;;
+    esac
+  done
+
+  # EOF reached (e.g., pipe closed without newline)
+  printf '\n' >&2
+  return 1
+}
+
 # validate_popup_size <value>
 # Validates that a popup dimension string matches the expected format.
 # Accepts: digits optionally followed by "px" or "%". E.g. "80%", "120px", "80".
