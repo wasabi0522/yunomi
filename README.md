@@ -2,7 +2,7 @@
 
 # 🍵 yunomi (湯呑)
 
-**Browse ghq repositories and operate branches in a tmux popup**
+**Browse ghq repositories and operate git & tmux together in a popup**
 
 [![CI](https://github.com/wasabi0522/yunomi/actions/workflows/ci.yml/badge.svg)](https://github.com/wasabi0522/yunomi/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -14,10 +14,10 @@
 
 ## Features
 
-Two-screen fzf popup that connects [ghq](https://github.com/x-motemen/ghq) repositories to [hashi](https://github.com/wasabi0522/hashi) branch operations.
+Two-screen fzf popup that connects [ghq](https://github.com/x-motemen/ghq) repositories to [hashi](https://github.com/wasabi0522/hashi) — a tool that manages git branches, worktrees, and tmux windows at once.
 
 - **Repository search** — fuzzy search across all ghq-managed repositories
-- **Branch operations** — switch, create, delete, and rename branches via hashi
+- **Git & tmux operations** — switch, create, delete, and rename via hashi (branch + worktree + tmux window at once)
 - **Live preview** — worktree info, commit log, and changed files in a side pane
 - **MRU sorting** — repositories by `.git/HEAD` mtime, branches by committer date
 - **Configurable** — trigger key, popup size, preview position, keybindings, and sort order
@@ -92,14 +92,14 @@ Press `prefix + G` (default) to open the popup.
 ╰────────────────────────────────────────────────────────╯
 ```
 
-**Screen 2 — Branch operations:**
+**Screen 2 — hashi operations:**
 
 | Key | Action |
 |-----|--------|
-| `Enter` | Switch to branch (`hashi switch`) |
-| `Ctrl-o` | Create new branch (`hashi new`) |
-| `Ctrl-d` | Delete branch (`hashi remove`) |
-| `Ctrl-r` | Rename branch (`hashi rename`) |
+| `Enter` | Switch (`hashi switch`) |
+| `Ctrl-o` | Create (`hashi new`) |
+| `Ctrl-d` | Remove (`hashi remove`) |
+| `Ctrl-r` | Rename (`hashi rename`) |
 | `Esc` | Back to Screen 1 |
 
 ```
