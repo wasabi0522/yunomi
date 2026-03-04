@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.0.4](https://github.com/wasabi0522/yunomi/compare/v0.0.3...v0.0.4) - 2026-03-04
+- Replace ASCII art with screenshot images in README by @wasabi0522 in https://github.com/wasabi0522/yunomi/pull/11
+
 ## [v0.0.3](https://github.com/wasabi0522/yunomi/compare/v0.0.2...v0.0.3) - 2026-03-03
 - Fix branch list crash on macOS default bash 3.2 by @wasabi0522 in https://github.com/wasabi0522/yunomi/pull/4
 - Update README with bash 4.0+ dependency and brew prerequisites by @wasabi0522 in https://github.com/wasabi0522/yunomi/pull/5
