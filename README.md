@@ -78,19 +78,7 @@ Press `prefix + G` (default) to open the popup.
 | `Enter` | Select repository → go to Screen 2 |
 | `Esc` | Close popup |
 
-```
-╭──────────────────────── yunomi ────────────────────────╮
-│                                                        │
-│  Repo> _                              42/42            │
-│ ▍ wasabi0522/yunomi                                   │
-│   wasabi0522/chawan                                    │
-│   wasabi0522/hashi                                     │
-│   ...                                                  │
-│                                                        │
-├────────────────────────────────────────────────────────┤
-│  enter:select  esc:close                               │
-╰────────────────────────────────────────────────────────╯
-```
+<img src="docs/images/screenshot_yunomi_1.png" alt="Screen 1 — Repository selection" width="600">
 
 **Screen 2 — hashi operations:**
 
@@ -102,22 +90,7 @@ Press `prefix + G` (default) to open the popup.
 | `Ctrl-r` | Rename (`hashi rename`) |
 | `Esc` | Back to Screen 1 |
 
-```
-╭──────────────────────── yunomi ────────────────────────╮
-│                                                        │
-├───────────────────────────┬── feature/login ───────────┤
-│  Branch> _          5/5   │ Worktree  .worktrees/...   │
-│                           │ Remote    ↑2 ↓0            │
-│  BRANCH          STATUS   │                            │
-│ ▍* feature/login ↑2 changed│ ── Commits ──              │
-│   fix/typo       merged   │ abc1234 feat: add login    │
-│   main           ↓3 clean │                            │
-│                           │ ── Changed ──              │
-│                           │ M  src/auth.go             │
-├───────────────────────────┴───────────────────────────┤
-│  enter:switch  C-o:new  C-d:del  C-r:rename  esc:back │
-╰────────────────────────────────────────────────────────╯
-```
+<img src="docs/images/screenshot_yunomi_2.png" alt="Screen 2 — hashi operations" width="600">
 
 ## Configuration
 
