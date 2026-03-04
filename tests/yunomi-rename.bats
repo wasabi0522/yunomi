@@ -7,8 +7,7 @@ load 'test_helper'
 # ---------------------------------------------------------------------------
 
 setup() {
-  MOCK_HASHI_CALLS="$(mktemp)"
-  export MOCK_HASHI_CALLS
+  setup_mocks
   mock_hashi
 
   SCRIPT="$PROJECT_ROOT/scripts/yunomi-rename.sh"
@@ -17,7 +16,7 @@ setup() {
 }
 
 teardown() {
-  rm -f "$MOCK_HASHI_CALLS"
+  teardown_mocks
   rm -rf "${MOCK_REPO_PATH:-}"
 }
 

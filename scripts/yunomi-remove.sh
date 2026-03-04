@@ -24,10 +24,7 @@ main() {
 
   # Run hashi remove
   # hashi operates on the repository in the current directory, so cd is required
-  cd "$repo_path" || {
-    printf 'yunomi: cannot cd to %s\n' "$repo_path" >&2
-    return 1
-  }
+  cd_repo "$repo_path" || return 1
   hashi remove -- "$branch_name" || return $?
 }
 

@@ -48,7 +48,9 @@ main() {
     return 0
   fi
 
-  # Pin the default branch to the top of the list
+  # Pin the default branch to the top of the list.
+  # Moves the default branch (e.g. "main") to position 0 while preserving
+  # the relative order of all other branches (from git branch or for-each-ref).
   local default_branch
   default_branch=$(get_default_branch "$repo_path")
   local _remaining=""
@@ -154,7 +156,7 @@ _full_branch_list() {
   declare -a all_remote_indicators=()
   declare -a all_main_statuses=()
 
-  local branch active worktree remote_indicator main_status git_status status_str is_merged
+  local branch active worktree remote_indicator main_status git_status is_merged
   while IFS= read -r branch; do
     [[ -z "$branch" ]] && continue
 
@@ -177,20 +179,17 @@ _full_branch_list() {
       get_main_status_var main_status "$git_status" "$is_merged"
     fi
 
-    # Build the status string (inlined to avoid subshell)
-    if [[ -n "$remote_indicator" ]]; then
-      status_str="${remote_indicator} ${main_status}"
-    else
-      status_str="$main_status"
-    fi
-
     all_branches+=("$branch")
     all_active+=("$active")
     all_remote_indicators+=("$remote_indicator")
     all_main_statuses+=("$main_status")
 
     branch_names_arr+=("$branch")
-    status_strings_arr+=("$status_str")
+    if [[ -n "$remote_indicator" ]]; then
+      status_strings_arr+=("${remote_indicator} ${main_status}")
+    else
+      status_strings_arr+=("$main_status")
+    fi
   done <<<"$branches_raw"
 
   local count=${#all_branches[@]}
@@ -201,7 +200,9 @@ _full_branch_list() {
 
   # --- 7. Calculate dynamic column widths ---
   local popup_cols="${YUNOMI_POPUP_COLS:-${COLUMNS:-80}}"
-  [[ ! "$popup_cols" =~ ^[0-9]+$ ]] && popup_cols=80
+  if [[ ! "$popup_cols" =~ ^[0-9]+$ ]] || [[ "$popup_cols" -lt 10 ]] || [[ "$popup_cols" -gt 9999 ]]; then
+    popup_cols=80
+  fi
   local branch_names_list status_strings_list
   branch_names_list=$(printf '%s\n' "${branch_names_arr[@]}")
   status_strings_list=$(printf '%s\n' "${status_strings_arr[@]}")

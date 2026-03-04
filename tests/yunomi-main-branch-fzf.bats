@@ -492,6 +492,41 @@ SCRIPT="$PROJECT_ROOT/scripts/yunomi-main.sh"
   assert_output --partial "ctrl-n"
 }
 
+@test "show_branch_list: invalid key binding falls back to default (ctrl-o for new)" {
+  local fzf_args_file
+  fzf_args_file=$(mktemp)
+  export fzf_args_file
+
+  run bash -c "
+    hashi() { printf '[]\n'; }
+    export -f hashi
+    # tmux returns an invalid key name for @yunomi-bind-new
+    tmux() {
+      if [[ \"\$*\" == *'@yunomi-bind-new'* ]]; then
+        echo 'INVALID-KEY!!!'
+      else
+        echo ''
+      fi
+    }
+    export -f tmux
+    fzf() {
+      printf '%s\n' \"\$@\" >\"$fzf_args_file\"
+      return 130
+    }
+    export -f fzf
+    source '$SCRIPT'
+    show_branch_list '/tmp/test-repo' >/dev/null 2>&1 || true
+  "
+
+  run cat "$fzf_args_file"
+  rm -f "$fzf_args_file"
+
+  # Invalid key should fall back to default ctrl-o
+  assert_output --partial "ctrl-o"
+  # Invalid key should not appear in the fzf args
+  refute_output --partial "INVALID-KEY"
+}
+
 @test "show_branch_list: repo_path with spaces is properly escaped in action bindings" {
   local fzf_args_file
   fzf_args_file=$(mktemp)
@@ -530,6 +565,39 @@ SCRIPT="$PROJECT_ROOT/scripts/yunomi-main.sh"
   "
 
   assert_output --partial "exit_code=130"
+}
+
+@test "show_branch_list: on accept, hashi switch is called with selected branch name" {
+  local hashi_calls_file
+  hashi_calls_file=$(mktemp)
+  export hashi_calls_file
+
+  local repo_path
+  repo_path=$(mktemp -d)
+  export repo_path
+
+  run bash -c "
+    hashi() {
+      printf '%s\n' \"\$*\" >>\"$hashi_calls_file\"
+      if [[ \"\$1\" == 'list' ]]; then
+        printf '[{\"branch\":\"main\",\"active\":true}]\n'
+      fi
+    }
+    export -f hashi
+    fzf() {
+      printf 'feature/login\t * feature/login  clean\n'
+      return 0
+    }
+    export -f fzf
+    source '$SCRIPT'
+    show_branch_list \"$repo_path\" >/dev/null 2>&1 || true
+  "
+
+  run grep 'switch' "$hashi_calls_file"
+  assert_output --partial "switch"
+  assert_output --partial "feature/login"
+  rm -f "$hashi_calls_file"
+  rmdir "$repo_path" 2>/dev/null || true
 }
 
 @test "show_branch_list: fzf exit code is returned as-is (0 for accept)" {

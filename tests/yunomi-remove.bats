@@ -7,8 +7,7 @@ load 'test_helper'
 # ---------------------------------------------------------------------------
 
 setup() {
-  MOCK_HASHI_CALLS="$(mktemp)"
-  export MOCK_HASHI_CALLS
+  setup_mocks
   mock_hashi
 
   MOCK_REPO_PATH="$(mktemp -d)"
@@ -19,7 +18,7 @@ setup() {
 }
 
 teardown() {
-  rm -f "${MOCK_HASHI_CALLS:-}"
+  teardown_mocks
   rm -rf "${MOCK_REPO_PATH:-}"
 }
 
@@ -63,4 +62,18 @@ teardown() {
 @test "remove: cd failure returns error" {
   run main "/nonexistent/path/that/does/not/exist" "main"
   assert_failure
+}
+
+# ---------------------------------------------------------------------------
+# EXIT_FLAG: remove does not create exit flag
+# ---------------------------------------------------------------------------
+
+@test "remove: does not create exit flag after successful removal" {
+  export YUNOMI_EXIT_FLAG="/tmp/yunomi-exit-test-$$"
+  run main "$MOCK_REPO_PATH" "feature/test"
+  assert_success
+
+  # exit flag must not be created (remove does not trigger popup exit)
+  [ ! -f "$YUNOMI_EXIT_FLAG" ]
+  rm -f "$YUNOMI_EXIT_FLAG"
 }

@@ -205,6 +205,12 @@ teardown() {
   assert_failure
 }
 
+@test "branch-list: exits with error when directory does not exist" {
+  run main "/nonexistent/path/to/repo"
+  assert_failure
+  assert_output --partial "directory not found"
+}
+
 # ---------------------------------------------------------------------------
 # YUNOMI_HASHI_JSON environment variable fallback
 # ---------------------------------------------------------------------------
@@ -235,7 +241,29 @@ teardown() {
 }
 
 # ---------------------------------------------------------------------------
-# --quick mode
+# YUNOMI_POPUP_COLS non-numeric fallback
+# ---------------------------------------------------------------------------
+
+@test "branch-list: non-numeric YUNOMI_POPUP_COLS falls back to 80" {
+  MOCK_GIT_BRANCHES="main
+develop"
+  MOCK_GIT_MERGED="  main"
+  mock_git
+  mock_hashi
+  mock_jq ""
+
+  export YUNOMI_POPUP_COLS="abc"
+  run main "$MOCK_REPO_DIR"
+  unset YUNOMI_POPUP_COLS
+  assert_success
+
+  # Should still produce valid output (header + data lines)
+  [ "${#lines[@]}" -ge 2 ]
+  [[ "${lines[0]}" == *"BRANCH"* ]]
+}
+
+# ---------------------------------------------------------------------------
+# --quick mode / empty branch list
 # ---------------------------------------------------------------------------
 
 @test "branch-list: empty branch list outputs header only" {
@@ -250,6 +278,40 @@ teardown() {
 
   [ "${#lines[@]}" -eq 1 ]
   [[ "${lines[0]}" == *"BRANCH"* ]]
+}
+
+@test "branch-list: remote ahead-only is shown in status" {
+  MOCK_GIT_BRANCHES="main"
+  MOCK_GIT_MERGED=""
+  MOCK_GIT_TRACKING=$'main\tahead 5'
+  mock_git
+
+  export YUNOMI_HASHI_JSON='[{"branch":"main","worktree":"/repo","active":true,"is_default":true}]'
+  mock_jq $'main\ttrue\t/repo'
+
+  run main "$MOCK_REPO_DIR"
+  assert_success
+
+  local data_line="${lines[1]}"
+  [[ "$data_line" == *"↑5"* ]]
+  [[ "$data_line" != *"↓"* ]]
+}
+
+@test "branch-list: remote behind-only is shown in status" {
+  MOCK_GIT_BRANCHES="main"
+  MOCK_GIT_MERGED=""
+  MOCK_GIT_TRACKING=$'main\tbehind 4'
+  mock_git
+
+  export YUNOMI_HASHI_JSON='[{"branch":"main","worktree":"/repo","active":true,"is_default":true}]'
+  mock_jq $'main\ttrue\t/repo'
+
+  run main "$MOCK_REPO_DIR"
+  assert_success
+
+  local data_line="${lines[1]}"
+  [[ "$data_line" != *"↑"* ]]
+  [[ "$data_line" == *"↓4"* ]]
 }
 
 @test "branch-list: remote ahead/behind is shown in status" {
@@ -334,8 +396,6 @@ teardown() {
   export -f tmux
 
   MOCK_GIT_BRANCHES=$'feature/z\nmain'
-  MOCK_GIT_CALLS="$(mktemp)"
-  export MOCK_GIT_CALLS
   mock_git
   mock_jq ""
 
@@ -343,7 +403,6 @@ teardown() {
   assert_success
 
   grep -q 'for-each-ref' "$MOCK_GIT_CALLS"
-  rm -f "$MOCK_GIT_CALLS"
 }
 
 # ---------------------------------------------------------------------------
@@ -437,8 +496,6 @@ teardown() {
   export -f tmux
 
   MOCK_GIT_BRANCHES=$'feature/z\nmain'
-  MOCK_GIT_CALLS="$(mktemp)"
-  export MOCK_GIT_CALLS
   mock_git
   mock_hashi '[]'
   mock_jq ""
@@ -448,7 +505,6 @@ teardown() {
 
   # for-each-ref must be recorded in MOCK_GIT_CALLS
   grep -q 'for-each-ref' "$MOCK_GIT_CALLS"
-  rm -f "$MOCK_GIT_CALLS"
 }
 
 # mru sort preserves for-each-ref output order in data lines

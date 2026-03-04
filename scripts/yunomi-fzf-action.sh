@@ -31,8 +31,8 @@ main() {
   local scripts_dir="${YUNOMI_SCRIPTS_DIR:-$CURRENT_DIR}"
 
   # Shell-escape the paths (chawan style: store in variables via printf -v)
-  local ESCAPED_SCRIPTS_DIR escaped_repo escaped_branch
-  printf -v ESCAPED_SCRIPTS_DIR '%q' "$scripts_dir"
+  local escaped_scripts_dir escaped_repo escaped_branch
+  printf -v escaped_scripts_dir '%q' "$scripts_dir"
   printf -v escaped_repo '%q' "$repo_path"
   printf -v escaped_branch '%q' "$branch_name"
 
@@ -47,8 +47,8 @@ main() {
       # reload:  regenerate the branch list
       # transform: check the exit flag → if present, output abort to close fzf
       printf 'execute(%s/yunomi-new.sh %s %s)+reload(%s/yunomi-branch-list.sh %s)+transform(%s)\n' \
-        "$ESCAPED_SCRIPTS_DIR" "$escaped_repo" "$escaped_branch" \
-        "$ESCAPED_SCRIPTS_DIR" "$escaped_repo" \
+        "$escaped_scripts_dir" "$escaped_repo" "$escaped_branch" \
+        "$escaped_scripts_dir" "$escaped_repo" \
         "$transform_check"
       ;;
     remove)
@@ -56,16 +56,16 @@ main() {
       # reload:  regenerate the branch list
       # no transform: always stay in fzf after remove
       printf 'execute(%s/yunomi-remove.sh %s %s)+reload(%s/yunomi-branch-list.sh %s)\n' \
-        "$ESCAPED_SCRIPTS_DIR" "$escaped_repo" "$escaped_branch" \
-        "$ESCAPED_SCRIPTS_DIR" "$escaped_repo"
+        "$escaped_scripts_dir" "$escaped_repo" "$escaped_branch" \
+        "$escaped_scripts_dir" "$escaped_repo"
       ;;
     rename)
       # execute: launch yunomi-rename.sh (prompt → hashi rename)
       # reload:  regenerate the branch list
       # no transform: always stay in fzf after rename
       printf 'execute(%s/yunomi-rename.sh %s %s)+reload(%s/yunomi-branch-list.sh %s)\n' \
-        "$ESCAPED_SCRIPTS_DIR" "$escaped_repo" "$escaped_branch" \
-        "$ESCAPED_SCRIPTS_DIR" "$escaped_repo"
+        "$escaped_scripts_dir" "$escaped_repo" "$escaped_branch" \
+        "$escaped_scripts_dir" "$escaped_repo"
       ;;
     *)
       printf 'yunomi-fzf-action: unknown action: %s\n' "$action" >&2

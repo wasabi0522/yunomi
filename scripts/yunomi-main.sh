@@ -149,13 +149,14 @@ main() {
   require_command ghq "https://github.com/x-motemen/ghq" || exit 1
   require_command jq "https://jqlang.github.io/jq/" || exit 1
 
-  # Create a unique exit flag file; YUNOMI_EXIT_FLAG must be in global scope for _cleanup
-  YUNOMI_EXIT_FLAG=$(mktemp "${TMPDIR:-/tmp}/yunomi-exit-XXXXXXXXXX")
-  rm -f "$YUNOMI_EXIT_FLAG"
+  # Reserve a unique exit flag path without creating the file (avoids TOCTOU race)
+  YUNOMI_EXIT_FLAG=$(mktemp -u "${TMPDIR:-/tmp}/yunomi-exit-XXXXXXXXXX")
   export YUNOMI_EXIT_FLAG
   trap '_cleanup_exit_flag' EXIT
 
-  # Set YUNOMI_SCRIPTS_DIR (referenced by helper scripts inside fzf action strings)
+  # Export YUNOMI_SCRIPTS_DIR so that helper scripts invoked from fzf action
+  # strings (yunomi-fzf-action.sh, yunomi-branch-list.sh, etc.) can locate
+  # sibling scripts without relying on CURRENT_DIR.
   export YUNOMI_SCRIPTS_DIR="$CURRENT_DIR"
 
   # Cache ghq root once (avoid repeated subprocess calls in the loop)
@@ -171,6 +172,9 @@ main() {
     # Also end the loop when ghq_path is empty (guard against show_repo_list returning a blank line)
     [[ -z "$ghq_path" ]] && break
 
+    # S-L1: Reject path traversal in ghq_path
+    [[ "$ghq_path" == *..* ]] && continue
+
     # Resolve the full path
     local repo_path
     repo_path="${ghq_root}/${ghq_path}"
@@ -184,7 +188,7 @@ main() {
 
     # accept (hashi switch): fzf returns 0 or 1. Any exit code other than 130 ends the loop
     # Esc (return to screen 1): fzf returns 130. Continue the loop
-    [[ $exit_code -ne 130 ]] && break
+    [[ $exit_code -eq 130 ]] || break
   done
 }
 
