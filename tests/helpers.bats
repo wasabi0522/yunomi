@@ -684,6 +684,35 @@ load 'test_helper'
 }
 
 # ---------------------------------------------------------------------------
+# print_separator
+# ---------------------------------------------------------------------------
+
+@test "print_separator: without label outputs solid separator line" {
+  COLUMNS=20
+  run print_separator
+  assert_success
+  # Output should be only ─ characters, exactly COLUMNS wide
+  [[ "$output" =~ ^─+$ ]]
+  local len=${#output}
+  [ "$len" -eq 20 ]
+}
+
+@test "print_separator: with label includes label in separator" {
+  COLUMNS=40
+  run print_separator "Commits (3)"
+  assert_success
+  [[ "$output" == *"Commits (3)"* ]]
+  [[ "$output" == "── Commits (3) "* ]]
+}
+
+@test "print_separator: extremely short width still produces output" {
+  COLUMNS=5
+  run print_separator "test"
+  assert_success
+  [[ "$output" == *"test"* ]]
+}
+
+# ---------------------------------------------------------------------------
 # read_input
 # ---------------------------------------------------------------------------
 
@@ -706,5 +735,173 @@ load 'test_helper'
 
 @test "read_input: EOF without newline returns 1" {
   run bash -c "source '$PROJECT_ROOT/scripts/helpers.sh'; printf 'abc' | read_input 'prompt: '"
+  assert_failure
+}
+
+@test "read_input: backspace removes last character" {
+  # type "ab" then backspace then "c" then Enter → REPLY should be "ac"
+  # Use process substitution to avoid pipeline subshell (REPLY would be lost in a pipe)
+  run bash -c "source '$PROJECT_ROOT/scripts/helpers.sh'; read_input 'prompt: ' < <(printf 'ab\x7fc\n') 2>/dev/null; echo \"\$REPLY\""
+  assert_success
+  assert_output "ac"
+}
+
+# ---------------------------------------------------------------------------
+# get_main_status_var
+# ---------------------------------------------------------------------------
+
+@test "get_main_status_var: conflict when UU marker present" {
+  local result=""
+  get_main_status_var result "UU src/foo.go" "false"
+  [ "$result" = "conflict" ]
+}
+
+@test "get_main_status_var: changed when non-empty and no unmerged" {
+  local result=""
+  get_main_status_var result " M src/foo.go" "false"
+  [ "$result" = "changed" ]
+}
+
+@test "get_main_status_var: merged when is_merged is true" {
+  local result=""
+  get_main_status_var result "" "true"
+  [ "$result" = "merged" ]
+}
+
+@test "get_main_status_var: clean when empty and not merged" {
+  local result=""
+  get_main_status_var result "" "false"
+  [ "$result" = "clean" ]
+}
+
+# ---------------------------------------------------------------------------
+# validate_popup_size
+# ---------------------------------------------------------------------------
+
+@test "validate_popup_size: accepts plain number" {
+  run validate_popup_size "80"
+  assert_success
+}
+
+@test "validate_popup_size: accepts percentage" {
+  run validate_popup_size "80%"
+  assert_success
+}
+
+@test "validate_popup_size: accepts px unit" {
+  run validate_popup_size "120px"
+  assert_success
+}
+
+@test "validate_popup_size: rejects alphabetic string" {
+  run validate_popup_size "abc"
+  assert_failure
+}
+
+@test "validate_popup_size: rejects empty string" {
+  run validate_popup_size ""
+  assert_failure
+}
+
+@test "validate_popup_size: rejects negative number" {
+  run validate_popup_size "-5"
+  assert_failure
+}
+
+# ---------------------------------------------------------------------------
+# fetch_hashi_json
+# ---------------------------------------------------------------------------
+
+@test "fetch_hashi_json: falls back to [] on failure" {
+  hashi() { return 1; }
+  export -f hashi
+
+  run fetch_hashi_json "/nonexistent/path"
+  assert_success
+  assert_output "[]"
+}
+
+# ---------------------------------------------------------------------------
+# get_main_status: conflict marker variants
+# ---------------------------------------------------------------------------
+
+@test "get_main_status: conflict for DD marker" {
+  run get_main_status "DD src/deleted.go" "" "feature/conflict"
+  assert_success
+  assert_output "conflict"
+}
+
+@test "get_main_status: conflict for DU marker" {
+  run get_main_status "DU src/foo.go" "" "feature/conflict"
+  assert_success
+  assert_output "conflict"
+}
+
+@test "get_main_status: changed for DA marker" {
+  # DA is not in the pattern (U[UDA]|[DA]U|AA|DD) → not conflict
+  run get_main_status "DA src/foo.go" "" "feature/conflict"
+  assert_success
+  assert_output "changed"
+}
+
+@test "get_main_status: conflict for AD marker" {
+  # AD is not in the pattern [DA]U or U[UDA] or AA or DD
+  # Actually checking: (U[UDA]|[DA]U|AA|DD) → AD does not match
+  run get_main_status "AD src/foo.go" "" "feature/conflict"
+  assert_success
+  assert_output "changed"
+}
+
+@test "get_main_status: conflict for UA marker" {
+  run get_main_status "UA src/foo.go" "" "feature/conflict"
+  assert_success
+  assert_output "conflict"
+}
+
+@test "get_main_status: conflict for AU marker" {
+  run get_main_status "AU src/foo.go" "" "feature/conflict"
+  assert_success
+  assert_output "conflict"
+}
+
+# ---------------------------------------------------------------------------
+# cd_repo
+# ---------------------------------------------------------------------------
+
+@test "cd_repo: succeeds for existing directory" {
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  run bash -c "source '$PROJECT_ROOT/scripts/helpers.sh'; cd_repo '$tmpdir' && pwd"
+  rm -rf "$tmpdir"
+  assert_success
+}
+
+@test "cd_repo: fails for nonexistent directory" {
+  run bash -c "source '$PROJECT_ROOT/scripts/helpers.sh'; cd_repo '/nonexistent/path/$$'"
+  assert_failure
+  assert_output --partial "cannot cd to"
+}
+
+# ---------------------------------------------------------------------------
+# validate_exit_flag_path
+# ---------------------------------------------------------------------------
+
+@test "validate_exit_flag_path: accepts valid absolute tmp path" {
+  run validate_exit_flag_path "/tmp/yunomi-exit-abc123"
+  assert_success
+}
+
+@test "validate_exit_flag_path: rejects empty path" {
+  run validate_exit_flag_path ""
+  assert_failure
+}
+
+@test "validate_exit_flag_path: rejects relative path" {
+  run validate_exit_flag_path "tmp/yunomi-exit-abc123"
+  assert_failure
+}
+
+@test "validate_exit_flag_path: rejects path with .." {
+  run validate_exit_flag_path "/tmp/../etc/passwd"
   assert_failure
 }

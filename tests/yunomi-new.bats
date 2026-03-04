@@ -7,8 +7,7 @@ load 'test_helper'
 # ---------------------------------------------------------------------------
 
 setup() {
-  MOCK_HASHI_CALLS="$(mktemp)"
-  export MOCK_HASHI_CALLS
+  setup_mocks
   mock_hashi
 
   export YUNOMI_PID="99999"
@@ -19,7 +18,7 @@ setup() {
 }
 
 teardown() {
-  rm -f "$MOCK_HASHI_CALLS"
+  teardown_mocks
   rm -f "$YUNOMI_EXIT_FLAG"
   rm -rf "${MOCK_REPO_PATH:-}"
 }
@@ -83,6 +82,17 @@ teardown() {
   assert_success
   # hashi new is called with branch only (no base)
   run grep -E 'new -- feature/login$' "$MOCK_HASHI_CALLS"
+  assert_success
+}
+
+# ---------------------------------------------------------------------------
+# Special characters in branch name
+# ---------------------------------------------------------------------------
+
+@test "yunomi-new: branch name with slash is passed correctly to hashi" {
+  run bash -c "echo 'feature/login-v2' | bash '$PROJECT_ROOT/scripts/yunomi-new.sh' '$MOCK_REPO_PATH'"
+  assert_success
+  run grep 'new -- feature/login-v2' "$MOCK_HASHI_CALLS"
   assert_success
 }
 

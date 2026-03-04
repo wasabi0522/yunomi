@@ -1,5 +1,26 @@
 #!/usr/bin/env bash
 
+# cd_repo <repo_path>
+# Changes to the given repository directory with a standardized error message.
+# Returns 1 if the directory cannot be accessed.
+cd_repo() {
+  local repo_path="$1"
+  cd "$repo_path" || {
+    printf 'yunomi: cannot cd to %s\n' "$repo_path" >&2
+    return 1
+  }
+}
+
+# validate_exit_flag_path <path>
+# Validates that the exit flag path is a reasonable temp file path.
+# Rejects empty paths, non-absolute paths, and paths containing "..".
+validate_exit_flag_path() {
+  local path="$1"
+  if [[ -z "$path" || "$path" != /* || "$path" == *..* ]]; then
+    return 1
+  fi
+}
+
 # get_option <option_name> <default_value>
 # Fetches a tmux user option.
 # Returns the default value when tmux is unavailable (e.g. during tests).
@@ -173,8 +194,8 @@ file_mtime() {
     echo 0
     return 0
   fi
-  # Use cached format if available
-  if [[ -n "${_YUNOMI_STAT_ARGS_STR:-}" ]]; then
+  # Use cached format if available (validate against known-good values only)
+  if [[ "${_YUNOMI_STAT_ARGS_STR:-}" == "-c %Y" || "${_YUNOMI_STAT_ARGS_STR:-}" == "-f %m" ]]; then
     local _stat_args
     read -ra _stat_args <<<"$_YUNOMI_STAT_ARGS_STR"
     if stat "${_stat_args[@]}" "$filepath" 2>/dev/null; then
@@ -223,6 +244,8 @@ validate_bind_key() {
 
 # get_main_status <git_status_short> <merged_branches> <branch>
 # Determines the main status (priority: conflict > changed > merged > clean).
+# Wrapper around get_main_status_var that outputs to stdout (for callers that
+# cannot use printf -v, e.g. yunomi-preview.sh).
 #
 # Arguments:
 #   $1  git_status_short: output of `git status --short`. Empty string means no changes or no worktree
@@ -235,21 +258,22 @@ get_main_status() {
   local merged_branches="$2"
   local branch="$3"
 
-  if [[ -n "$git_status" ]]; then
-    if [[ "$git_status" =~ (^|$'\n')(U[UDA]|[DA]U|AA|DD) ]]; then
-      echo "conflict"
-      return 0
+  # S-L2: Determine is_merged using exact-match while-read loop
+  # (avoids regex metacharacter issues with branch names like "feature/test+1")
+  local is_merged="false"
+  local _line
+  while IFS= read -r _line; do
+    # Strip leading whitespace (git branch --merged indents with spaces)
+    _line="${_line#"${_line%%[![:space:]]*}"}"
+    if [[ "$_line" == "$branch" ]]; then
+      is_merged="true"
+      break
     fi
-    echo "changed"
-    return 0
-  fi
+  done <<<"$merged_branches"
 
-  if [[ "$merged_branches" =~ (^|[[:space:]])"$branch"($|$'\n') ]]; then
-    echo "merged"
-    return 0
-  fi
-
-  echo "clean"
+  local _gms_out
+  get_main_status_var _gms_out "$git_status" "$is_merged"
+  echo "$_gms_out"
 }
 
 # get_main_status_var <result_var> <git_status_short> <is_merged>
@@ -260,6 +284,7 @@ get_main_status() {
 #   $2  git_status_short: output of `git status --short` (empty = no changes or no worktree)
 #   $3  is_merged:        "true" if the branch is merged, "false" otherwise
 #
+# Priority (highest wins): conflict > changed > merged > clean
 # Output: sets the named variable to "conflict" | "changed" | "merged" | "clean"
 get_main_status_var() {
   local _result_var="$1"

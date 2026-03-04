@@ -306,6 +306,38 @@ SCRIPT
   [ "$call_count" -eq 1 ]
 }
 
+@test "main: loop breaks when ghq_path is empty" {
+  mock_ghq
+  mock_hashi
+
+  local call_count_file
+  call_count_file=$(mktemp)
+  printf '0' >"$call_count_file"
+  export call_count_file
+
+  run bash -c "
+    source '$SCRIPT'
+    show_repo_list() {
+      local count
+      count=\$(cat \"$call_count_file\")
+      count=\$((count + 1))
+      printf '%s' \"\$count\" >\"$call_count_file\"
+      echo ''
+      return 0
+    }
+    show_branch_list() { return 0; }
+    command() { return 0; }
+    export -f command show_repo_list show_branch_list
+    main
+  " </dev/null
+
+  # show_repo_list returns empty string, so loop should break immediately
+  local call_count
+  call_count=$(cat "$call_count_file")
+  rm -f "$call_count_file"
+  [ "$call_count" -eq 1 ]
+}
+
 @test "main: loop breaks when EXIT_FLAG is set" {
   mock_ghq
   mock_hashi

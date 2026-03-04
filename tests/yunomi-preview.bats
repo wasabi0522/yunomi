@@ -7,6 +7,7 @@ load 'test_helper'
 # ---------------------------------------------------------------------------
 
 setup() {
+  setup_mocks
   # shellcheck source=scripts/yunomi-preview.sh
   source "$PROJECT_ROOT/scripts/yunomi-preview.sh"
   # use an empty directory as repo_path for tests
@@ -16,6 +17,7 @@ setup() {
 }
 
 teardown() {
+  teardown_mocks
   rm -rf "$MOCK_REPO_PATH"
   unset YUNOMI_HASHI_JSON
   unset MOCK_GIT_LOG
@@ -186,6 +188,23 @@ ghi9012 fix: session timeout
   [ "$found" -eq 1 ]
 }
 
+@test "preview: Commits (0) when git log is empty" {
+  export YUNOMI_HASHI_JSON='[{"branch":"feature/empty","worktree":"/repo/.worktrees/feature/empty","window":false,"active":false,"is_default":false,"status":"ok"}]'
+  mock_git
+  # Set MOCK_GIT_LOG after mock_git: the :- operator in mock_git treats "" as unset
+  MOCK_GIT_LOG=""
+  export MOCK_GIT_LOG
+  mock_jq "/repo/.worktrees/feature/empty"
+
+  run main "feature/empty" "$MOCK_REPO_PATH"
+  assert_success
+  local found=0
+  for line in "${lines[@]}"; do
+    [[ "$line" == *"Commits (0)"* ]] && found=1
+  done
+  [ "$found" -eq 1 ]
+}
+
 @test "preview: Commits section shows commit count" {
   export YUNOMI_HASHI_JSON='[{"branch":"feature/login","worktree":"/repo/.worktrees/feature/login","window":true,"active":false,"is_default":false,"status":"ok"}]'
   MOCK_GIT_LOG="abc1234 feat: add login form
@@ -264,50 +283,13 @@ A  src/login.go"
 
 @test "preview: when no remote branch, Remote line shows '(no remote)'" {
   export YUNOMI_HASHI_JSON='[{"branch":"local-only","worktree":"/repo/.worktrees/local-only","window":false,"active":false,"is_default":false,"status":"ok"}]'
+  MOCK_GIT_REVLIST_EXIT=1
+  export MOCK_GIT_REVLIST_EXIT
   mock_git
   mock_jq "/repo/.worktrees/local-only"
 
-  # mock state where git rev-parse --verify cannot find the remote branch
-  git() {
-    local args=("$@")
-    local subcmd=""
-    local i=0
-    while [[ $i -lt ${#args[@]} ]]; do
-      if [[ "${args[$i]}" == "-C" ]]; then
-        i=$((i + 2))
-        continue
-      fi
-      subcmd="${args[$i]}"
-      break
-    done
-    case "$subcmd" in
-      rev-parse)
-        return 1
-        ;;
-      log)
-        printf '%s\n' "${MOCK_GIT_LOG:-}"
-        ;;
-      branch)
-        if printf '%s\n' "${args[@]}" | grep -q -- '--merged'; then
-          printf '%s\n' "${MOCK_GIT_MERGED:-  main}"
-        else
-          printf '%s\n' "${MOCK_GIT_BRANCHES:-main}" | sed 's/^/  /'
-        fi
-        ;;
-      status)
-        printf '%s\n' "${MOCK_GIT_STATUS_SHORT:-}"
-        ;;
-      symbolic-ref)
-        printf 'origin/%s\n' "${MOCK_GIT_DEFAULT_BRANCH:-main}"
-        ;;
-      *)
-        return 0
-        ;;
-    esac
-  }
-  export -f git
-
   run main "local-only" "$MOCK_REPO_PATH"
+  unset MOCK_GIT_REVLIST_EXIT
   assert_success
   local found=0
   for line in "${lines[@]}"; do
@@ -322,37 +304,6 @@ A  src/login.go"
   export MOCK_GIT_REVLIST
   mock_git
   mock_jq "/repo/.worktrees/feature/login"
-
-  # override git to make rev-parse --verify succeed
-  git() {
-    local args=("$@")
-    local subcmd=""
-    local i=0
-    while [[ $i -lt ${#args[@]} ]]; do
-      if [[ "${args[$i]}" == "-C" ]]; then
-        i=$((i + 2))
-        continue
-      fi
-      subcmd="${args[$i]}"
-      break
-    done
-    case "$subcmd" in
-      rev-parse) return 0 ;;
-      rev-list) printf '%s\n' "${MOCK_GIT_REVLIST:-$(printf '0\t0')}" ;;
-      log) printf '%s\n' "${MOCK_GIT_LOG:-}" ;;
-      branch)
-        if printf '%s\n' "${args[@]}" | grep -q -- '--merged'; then
-          printf '%s\n' "${MOCK_GIT_MERGED:-  main}"
-        else
-          printf '%s\n' "${MOCK_GIT_BRANCHES:-main}" | sed 's/^/  /'
-        fi
-        ;;
-      status) printf '%s\n' "${MOCK_GIT_STATUS_SHORT:-}" ;;
-      symbolic-ref) printf 'origin/%s\n' "${MOCK_GIT_DEFAULT_BRANCH:-main}" ;;
-      *) return 0 ;;
-    esac
-  }
-  export -f git
 
   run main "feature/login" "$MOCK_REPO_PATH"
   assert_success
@@ -369,36 +320,6 @@ A  src/login.go"
   export MOCK_GIT_REVLIST
   mock_git
   mock_jq "/repo/.worktrees/main"
-
-  git() {
-    local args=("$@")
-    local subcmd=""
-    local i=0
-    while [[ $i -lt ${#args[@]} ]]; do
-      if [[ "${args[$i]}" == "-C" ]]; then
-        i=$((i + 2))
-        continue
-      fi
-      subcmd="${args[$i]}"
-      break
-    done
-    case "$subcmd" in
-      rev-parse) return 0 ;;
-      rev-list) printf '%s\n' "${MOCK_GIT_REVLIST:-$(printf '0\t0')}" ;;
-      log) printf '%s\n' "${MOCK_GIT_LOG:-}" ;;
-      branch)
-        if printf '%s\n' "${args[@]}" | grep -q -- '--merged'; then
-          printf '%s\n' "${MOCK_GIT_MERGED:-  main}"
-        else
-          printf '%s\n' "${MOCK_GIT_BRANCHES:-main}" | sed 's/^/  /'
-        fi
-        ;;
-      status) printf '%s\n' "${MOCK_GIT_STATUS_SHORT:-}" ;;
-      symbolic-ref) printf 'origin/%s\n' "${MOCK_GIT_DEFAULT_BRANCH:-main}" ;;
-      *) return 0 ;;
-    esac
-  }
-  export -f git
 
   run main "main" "$MOCK_REPO_PATH"
   assert_success
@@ -461,9 +382,6 @@ A  src/login.go"
   export YUNOMI_HASHI_JSON='[{"branch":"feature/login","worktree":"/repo/.worktrees/feature/login","window":true,"active":false,"is_default":false,"status":"ok"}]'
   mock_jq "/repo/.worktrees/feature/login"
 
-  # mock that records git call arguments
-  MOCK_GIT_CALLS="$(mktemp)"
-  export MOCK_GIT_CALLS
   mock_git
 
   run main "feature/login" "$MOCK_REPO_PATH"
@@ -473,8 +391,48 @@ A  src/login.go"
   # each line in MOCK_GIT_CALLS has the format "-C /path log ..."
   run grep " log " "$MOCK_GIT_CALLS"
   assert_output --partial " --"
+}
 
-  rm -f "$MOCK_GIT_CALLS"
+# ---------------------------------------------------------------------------
+# Argument validation
+# ---------------------------------------------------------------------------
+
+@test "preview: when ahead=3 and behind=2, Remote line contains both ↑3 and ↓2" {
+  export YUNOMI_HASHI_JSON='[{"branch":"feature/login","worktree":"/repo/.worktrees/feature/login","window":true,"active":false,"is_default":false,"status":"ok"}]'
+  MOCK_GIT_REVLIST=$(printf '3\t2')
+  export MOCK_GIT_REVLIST
+  mock_git
+  mock_jq "/repo/.worktrees/feature/login"
+
+  run main "feature/login" "$MOCK_REPO_PATH"
+  assert_success
+  local found_up=0 found_down=0
+  for line in "${lines[@]}"; do
+    [[ "$line" == *"Remote"* && "$line" == *"↑3"* ]] && found_up=1
+    [[ "$line" == *"Remote"* && "$line" == *"↓2"* ]] && found_down=1
+  done
+  [ "$found_up" -eq 1 ]
+  [ "$found_down" -eq 1 ]
+}
+
+# ---------------------------------------------------------------------------
+# Status display: conflict detection
+# ---------------------------------------------------------------------------
+
+@test "preview: with worktree and conflict markers, Status shows conflict" {
+  export YUNOMI_HASHI_JSON='[{"branch":"feature/login","worktree":"/repo/.worktrees/feature/login","window":true,"active":false,"is_default":false,"status":"ok"}]'
+  MOCK_GIT_STATUS_SHORT="UU src/conflict.go"
+  export MOCK_GIT_STATUS_SHORT
+  mock_git
+  mock_jq "/repo/.worktrees/feature/login"
+
+  run main "feature/login" "$MOCK_REPO_PATH"
+  assert_success
+  local found=0
+  for line in "${lines[@]}"; do
+    [[ "$line" == *"Status"* && "$line" == *"conflict"* ]] && found=1
+  done
+  [ "$found" -eq 1 ]
 }
 
 # ---------------------------------------------------------------------------

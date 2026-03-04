@@ -33,10 +33,12 @@ main() {
   fi
 
   # ─── Remote tracking status ───
-  local remote_ref="origin/${branch_name}"
+  # Use refs/heads/ and refs/remotes/ prefixes to prevent branch name injection
+  local branch_ref="refs/heads/${branch_name}"
+  local remote_ref="refs/remotes/origin/${branch_name}"
   local revlist
   revlist=$(git -C "$repo_path" rev-list --left-right --count \
-    -- "${branch_name}...${remote_ref}" 2>/dev/null) || revlist=""
+    "${branch_ref}...${remote_ref}" 2>/dev/null) || revlist=""
   if [[ -n "$revlist" ]]; then
     local ahead behind
     ahead="${revlist%%$'\t'*}"
@@ -71,7 +73,7 @@ main() {
 
   # ─── Commits ───
   local commits
-  commits=$(git -C "$repo_path" log --oneline -5 "$branch_name" -- 2>/dev/null || true)
+  commits=$(git -C "$repo_path" log --oneline -5 "refs/heads/${branch_name}" -- 2>/dev/null || true)
   local commit_count=0
   if [[ -n "$commits" ]]; then
     local _lines

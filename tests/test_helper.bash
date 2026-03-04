@@ -10,15 +10,21 @@ source "$PROJECT_ROOT/scripts/helpers.sh"
 
 # --- Mock helpers (ported from chawan) ---
 
-# Creates MOCK_TMUX_CALLS temp file and exports it.
+# Creates mock temp files and exports them.
 setup_mocks() {
   MOCK_TMUX_CALLS="$(mktemp)"
   export MOCK_TMUX_CALLS
+  MOCK_HASHI_CALLS="$(mktemp)"
+  export MOCK_HASHI_CALLS
+  MOCK_GIT_CALLS="$(mktemp)"
+  export MOCK_GIT_CALLS
 }
 
 # Removes all mock temp files.
 teardown_mocks() {
   rm -f "${MOCK_TMUX_CALLS:-}"
+  rm -f "${MOCK_HASHI_CALLS:-}"
+  rm -f "${MOCK_GIT_CALLS:-}"
 }
 
 # Installs a tmux mock that only records calls.
@@ -222,6 +228,9 @@ ghi9012 fix: session timeout
         return 0
         ;;
       rev-list)
+        if [[ "${MOCK_GIT_REVLIST_EXIT:-0}" -ne 0 ]]; then
+          return "${MOCK_GIT_REVLIST_EXIT}"
+        fi
         printf '%s\n' "$MOCK_GIT_REVLIST"
         ;;
       status)

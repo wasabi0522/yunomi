@@ -3,6 +3,18 @@ CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/helpers.sh
 source "$CURRENT_DIR/helpers.sh"
 
+# main <repo_path> [base_branch]
+#
+# Helper to create a new branch. Called from fzf's execute() action.
+#
+# Arguments:
+#   $1  repo_path   - absolute path to the target repository
+#   $2  base_branch - (optional) base branch to create from
+#
+# Environment variables:
+#   YUNOMI_EXIT_FLAG  path to the exit flag file (exported by yunomi-main.sh).
+#                     Touched on success to signal the popup to close,
+#                     because hashi switches to the new window automatically.
 main() {
   local repo_path="$1"
   local base_branch="${2:-}"
@@ -16,18 +28,17 @@ main() {
     return 0
   fi
 
-  cd "$repo_path" || {
-    printf 'yunomi: cannot cd to %s\n' "$repo_path" >&2
-    return 1
-  }
+  cd_repo "$repo_path" || return 1
   if [[ -n "$base_branch" ]]; then
-    hashi new -- "$name" "$base_branch" || return 1
+    hashi new -- "$name" "$base_branch" || return $?
   else
-    hashi new -- "$name" || return 1
+    hashi new -- "$name" || return $?
   fi
 
   # On success: set the exit flag to signal the popup to close
-  touch "$YUNOMI_EXIT_FLAG"
+  if validate_exit_flag_path "${YUNOMI_EXIT_FLAG:-}"; then
+    touch "$YUNOMI_EXIT_FLAG"
+  fi
 }
 
 # Apply set -euo pipefail only when executed directly.
