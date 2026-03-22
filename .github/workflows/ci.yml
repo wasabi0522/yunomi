@@ -15,7 +15,7 @@ jobs:
           shfmt-version: 3.12.0
       - name: Cache ShellCheck
         id: cache-shellcheck
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: /usr/local/bin/shellcheck
           key: shellcheck-${{ env.SHELLCHECK_VERSION }}
@@ -57,7 +57,7 @@ jobs:
           detik-install: false
           file-install: false
       - name: Cache gems
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: ~/gems
           key: gems-bashcov-3.3.0
